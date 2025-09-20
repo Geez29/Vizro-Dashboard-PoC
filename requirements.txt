@@ -1,4 +1,4 @@
-dash>=3.0
-pandas
-plotly
-openpyxl
+dash>=3.7
+pandas>=2.1
+plotly>=5.18
+openpyxl>=3.1
