@@ -1,5 +1,6 @@
-import pandas as pd
+import os
 from dash import Dash, dcc, html, Input, Output
+import pandas as pd
 import plotly.express as px
 
 # -------- Load Excel Data --------
@@ -29,9 +30,9 @@ def load_sheet(sheet_name):
 
 # -------- Initialize App --------
 app = Dash(__name__, suppress_callback_exceptions=True)
-server = app.server  # for Render deployment
+server = app.server  # needed for Render
 
-# -------- App Layout --------
+# -------- Layout --------
 app.layout = html.Div([
     html.H1("Cloud Cost Dashboard"),
     dcc.Tabs(id="tabs", value="tab-services", children=[
@@ -42,7 +43,6 @@ app.layout = html.Div([
     html.Div(id="tab-content")
 ])
 
-# -------- Callbacks to Update Tabs --------
 @app.callback(
     Output("tab-content", "children"),
     Input("tabs", "value")
@@ -52,10 +52,7 @@ def render_tab(tab):
         df = load_sheet("Services")
         fig_bar = px.bar(df, x="Service", y="Cost", title="Cost by Service")
         fig_pie = px.pie(df, names="Service", values="Cost", title="Service Cost Distribution")
-        return html.Div([
-            dcc.Graph(figure=fig_bar),
-            dcc.Graph(figure=fig_pie)
-        ])
+        return html.Div([dcc.Graph(figure=fig_bar), dcc.Graph(figure=fig_pie)])
     elif tab == "tab-csp":
         df = load_sheet("CSP")
         fig = px.bar(df, x="CSP", y="Cost", title="Cost by CSP")
@@ -68,5 +65,5 @@ def render_tab(tab):
 
 # -------- Run App --------
 if __name__ == "__main__":
-    app.run(debug=True)   # ✅ updated for Dash 3.x
-
+    port = int(os.environ.get("PORT", 8050))  # Use Render's assigned port
+    app.run(debug=False, host="0.0.0.0", port=port)
