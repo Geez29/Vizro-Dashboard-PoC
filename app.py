@@ -1,6 +1,6 @@
 import os
-from dash import Dash, dcc, html, Input, Output
 import pandas as pd
+from dash import Dash, dcc, html, Input, Output
 import plotly.express as px
 
 # -------- Load Excel Data --------
@@ -13,8 +13,8 @@ def load_sheet(sheet_name):
         # Dummy data if Excel missing
         if sheet_name == "Services":
             return pd.DataFrame({
-                "Service": ["Compute", "Database", "Storage", "Networking"],
-                "Cost": [12000, 8500, 6000, 4000]
+                "Service": ["Compute", "Database", "Storage", "Networking", "Analytics"],
+                "Cost": [12000, 8500, 6000, 4000, 3000]
             })
         elif sheet_name == "CSP":
             return pd.DataFrame({
@@ -23,14 +23,14 @@ def load_sheet(sheet_name):
             })
         elif sheet_name == "Applications":
             return pd.DataFrame({
-                "Application": ["App1", "App2", "App3"],
-                "Cost": [7000, 5000, 6000]
+                "Application": ["App1", "App2", "App3", "App4"],
+                "Cost": [7000, 5000, 6000, 4000]
             })
         return pd.DataFrame()
 
-# -------- Initialize App --------
+# -------- Initialize Dash App --------
 app = Dash(__name__, suppress_callback_exceptions=True)
-server = app.server  # needed for Render
+server = app.server  # Required for Render
 
 # -------- Layout --------
 app.layout = html.Div([
@@ -43,6 +43,7 @@ app.layout = html.Div([
     html.Div(id="tab-content")
 ])
 
+# -------- Callback to Update Tabs --------
 @app.callback(
     Output("tab-content", "children"),
     Input("tabs", "value")
@@ -52,18 +53,24 @@ def render_tab(tab):
         df = load_sheet("Services")
         fig_bar = px.bar(df, x="Service", y="Cost", title="Cost by Service")
         fig_pie = px.pie(df, names="Service", values="Cost", title="Service Cost Distribution")
-        return html.Div([dcc.Graph(figure=fig_bar), dcc.Graph(figure=fig_pie)])
+        fig_heat = px.density_heatmap(df, x="Service", y="Cost", title="Service Cost Heatmap")
+        return html.Div([
+            dcc.Graph(figure=fig_bar),
+            dcc.Graph(figure=fig_pie),
+            dcc.Graph(figure=fig_heat)
+        ])
     elif tab == "tab-csp":
         df = load_sheet("CSP")
-        fig = px.bar(df, x="CSP", y="Cost", title="Cost by CSP")
-        return dcc.Graph(figure=fig)
+        fig_bar = px.bar(df, x="CSP", y="Cost", title="Cost by CSP")
+        fig_pie = px.pie(df, names="CSP", values="Cost", title="CSP Cost Distribution")
+        return html.Div([dcc.Graph(figure=fig_bar), dcc.Graph(figure=fig_pie)])
     elif tab == "tab-apps":
         df = load_sheet("Applications")
-        fig = px.bar(df, x="Application", y="Cost", title="Cost by Application")
-        return dcc.Graph(figure=fig)
-    return html.Div("No data")
+        fig_bar = px.bar(df, x="Application", y="Cost", title="Cost by Application")
+        return dcc.Graph(figure=fig_bar)
+    return html.Div("No data available")
 
 # -------- Run App --------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8050))  # Use Render's assigned port
+    port = int(os.environ.get("PORT", 8050))
     app.run(debug=False, host="0.0.0.0", port=port)
