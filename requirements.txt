@@ -1,5 +1,0 @@
-vizro
-pandas
-plotly
-openpyxl
-gunicorn
